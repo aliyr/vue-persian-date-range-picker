@@ -8,7 +8,7 @@
       format="YY/MM/D HH:mm"
       min="1388/12/23"
       max="1432/6/23"
-      :time="false"
+      :time="true"
       theme-color="#32CD32"
     ></vue-date-range-picker>
   </div>

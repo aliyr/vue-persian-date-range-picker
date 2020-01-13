@@ -235,7 +235,6 @@
         <div class="time-selection-container">
           <div class="minute-container">
             <div class="top-arrow" @click="timeIterator('increase', 'minute')">
-              t
             </div>
             <div class="time-shower">
               {{ currentSelectedTime.minute | prependZeroToTime }}
@@ -244,19 +243,16 @@
               class="bottom-arrow"
               @click="timeIterator('decrease', 'minute')"
             >
-              b
             </div>
           </div>
           <div class="two-dots">:</div>
           <div class="hour-container">
             <div class="top-arrow" @click="timeIterator('increase', 'hour')">
-              t
             </div>
             <div class="time-shower">
               {{ currentSelectedTime.hour | prependZeroToTime }}
             </div>
             <div class="bottom-arrow" @click="timeIterator('decrease', 'hour')">
-              b
             </div>
           </div>
         </div>
@@ -318,6 +314,11 @@
             {{ month.name }}
           </div>
         </div>
+      </div>
+      <div class="action-bar-container">
+        <button class="confirm">تایید</button>
+        <button class="cancel" @click="clearDateRanges">لغو</button>
+        <button class="close">بازگشت</button>
       </div>
     </div>
     <div class="mnx-dtp-mask" v-if="isOpen" @click="onInputSelect"></div>
@@ -634,6 +635,8 @@ export default {
       this.formattedFirstYearAndMonth = selectedMonth.format("MMMM YYYY");
       this.formattedSecondYearAndMonth = nextSelectedMonth.format("MMMM YYYY");
 
+      let timeHeaderFormat = this.time ? "dddd, DD MMMM YYYY, HH:mm" : "dddd, DD MMMM YYYY";
+
       if (this.rangeDateArray[0]) {
         // because if the range is selected, the next click that removes the range,
         // should remove the second `formattedRangeOfDates`
@@ -643,13 +646,13 @@ export default {
 
         this.formattedRangeOfDates[0] = new PersianDate(
           this.rangeDateArray[0].date
-        ).format("dddd, DD MMMM YYYY, HH:mm");
+        ).format(timeHeaderFormat);
       }
 
       if (this.rangeDateArray[1]) {
         this.formattedRangeOfDates[1] = new PersianDate(
           this.rangeDateArray[1].date
-        ).format("dddd, DD MMMM YYYY, HH:mm");
+        ).format(timeHeaderFormat);
       }
     },
     // 'internalDateId' generator for each date ====>>>> [1398, 12,23] => mnx-dtp-1398-12-23
@@ -783,13 +786,13 @@ export default {
         this.rangeDateArray = this.rangeDateArray.reverse();
       }
 
-      // if (this.time) {
+      if (this.time) {
       this.rangeDateArray[0].date[3] = 0;
       this.rangeDateArray[0].date[4] = 0;
 
       this.rangeDateArray[1].date[3] = 23;
       this.rangeDateArray[1].date[4] = 59;
-      // }
+      }
     },
     clearDateRanges() {
       this.selectedDatesInRangeArray = [];
@@ -974,6 +977,13 @@ export default {
   &:hover{
     transition: .2s;
   }
+
+}
+
+
+*::selection {
+  background-color: transparent;
+  color: inherit;
 }
 
 @font-face {
@@ -1049,6 +1059,7 @@ export default {
             padding: 5px 5px 2px 5px;
             cursor: pointer;
             transition: 0.3s;
+            display: inline-block;
 
             &:hover {
               background-color: rgba(255, 255, 255, 0.13);
@@ -1266,7 +1277,7 @@ export default {
 
     .time-picker-container {
       position: relative;
-      width: 754px;
+      width: 100%;
       height: 385px;
       display: flex;
       justify-content: center;
@@ -1292,6 +1303,11 @@ export default {
             font-size: 25px;
             line-height: 50px;
             cursor: pointer;
+            background-image: url("../assets/img/arrow-right.png");
+            background-size: contain;
+            width: 30px;
+            background-repeat: no-repeat;
+            background-position: center;
 
             &::selection {
               background-color: transparent;
@@ -1300,8 +1316,10 @@ export default {
           }
 
           .top-arrow {
+            transform: rotate(-90deg);
           }
           .bottom-arrow {
+            transform: rotate(90deg);
           }
 
           .time-shower {
@@ -1368,7 +1386,7 @@ export default {
     }
 
     .year-month-selection-wrapper {
-      width: 754px;
+      width: 100%;
       position: relative;
       padding-top: 36px;
 
@@ -1480,6 +1498,34 @@ export default {
         }
       }
     }
+
+    .action-bar-container{
+      display: flex;
+      justify-content: flex-start;
+      padding: 16px;
+      button {
+        border: 1px solid var(--main-color);
+        color: var(--main-color);
+        background-color: transparent;
+        font-size: 16px;
+        margin-right: 10px;
+        border-radius: 5px;
+        font-weight: bold;
+        cursor: pointer;
+        -webkit-transition: 0.3s;
+        transition: 0.3s;
+        display: inline-block;
+        line-height: 25px;
+        height: 45px;
+        min-width: 80px;
+        padding: 12px 8px 8px;
+
+        &:hover{
+          background-color: var(--main-color);
+          color: white;
+        }
+      }
+    }
   }
   .mnx-dtp-mask {
     position: fixed;
@@ -1511,6 +1557,37 @@ export default {
           display: none;
         }
       }
+
+      .mnx-dtp-header.range-header {
+        .month-container {
+          span.time-picker-button{
+            margin-right: 0;
+            display: block;
+            width: 108px;
+          }
+        }
+      }
+
+      .year-month-selection-wrapper{
+
+        .year-selection-wrapper{
+
+          .year{
+            margin-right: 0px;
+            margin-bottom: 8px;
+          }
+
+        }
+
+        .month-selection-wrapper{
+
+          .month{
+            margin-right: 0px;
+            margin-bottom: 8px;
+          }
+        }
+      }
+
     }
   }
 }
