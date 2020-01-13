@@ -1,5 +1,5 @@
 <template>
-  <div class="mnx-dtp">
+  <div class="mnx-dtp" :style="theme">
     <!--  the textbox that shows the current date or range date   -->
     <input
       type="text"
@@ -360,6 +360,10 @@ export default {
     // The option that allows user to select time for each selected date in range
     time: {
       type: Boolean
+    },
+    themeColor: {
+      type: String,
+      default: "#007BFF"
     }
   },
   data() {
@@ -780,11 +784,11 @@ export default {
       }
 
       // if (this.time) {
-        this.rangeDateArray[0].date[3] = 0;
-        this.rangeDateArray[0].date[4] = 0;
+      this.rangeDateArray[0].date[3] = 0;
+      this.rangeDateArray[0].date[4] = 0;
 
-        this.rangeDateArray[1].date[3] = 23;
-        this.rangeDateArray[1].date[4] = 59;
+      this.rangeDateArray[1].date[3] = 23;
+      this.rangeDateArray[1].date[4] = 59;
       // }
     },
     clearDateRanges() {
@@ -940,11 +944,19 @@ export default {
           this.datetimePickerObj.monthsArray.secondMonth.days[0].dayOfWeek
         ) - 1
       );
+    },
+    theme: function() {
+      return {
+        "--main-color": this.themeColor,
+        "--secondary-color": this.themeColor + "B3",
+        "--hover-color": this.themeColor + "80"
+      };
     }
   },
   filters: {
     prependZeroToTime: function(value) {
       value = value.toString();
+
       if (value.length === 2) return value;
       return "0" + value;
     }
@@ -958,15 +970,15 @@ export default {
 *::before {
   box-sizing: border-box;
   font-family: IRANSansMobileFaNum !important;
+
+  &:hover{
+    transition: .2s;
+  }
 }
 
 @font-face {
   font-family: "IranSans";
   src: url("../assets/font/IRANSans.ttf") format("truetype");
-}
-
-body {
-  font-family: IranSans !important;
 }
 
 @font-face {
@@ -980,8 +992,9 @@ body {
 }
 
 .mnx-dtp {
-  font-family: IRANSansMobileFaNum;
+  font-family: IranSans;
   transition: 0.3s;
+  direction: rtl;
 
   .mnx-dtp-input {
   }
@@ -1009,7 +1022,7 @@ body {
     .mnx-dtp-header {
       color: #fff;
       padding: 20px 20px;
-      background-color: #417df4;
+      background-color: var(--main-color);
       font-size: 25px;
 
       &.range-header {
@@ -1022,6 +1035,7 @@ body {
 
         .month-container {
           font-size: 20px;
+          text-align: right;
 
           &:nth-child(1) {
             padding-bottom: 15px;
@@ -1118,15 +1132,19 @@ body {
 
         &.selected-date {
           color: white;
-          background-color: rgba(0, 123, 255, 1);
+          background-color: var(--main-color);
           border-radius: 30px;
         }
 
         &.selected-in-range {
           border-radius: 0;
 
+          &.today {
+            border-radius: 0;
+          }
+
           &.is-first-day {
-            background-color: rgba(0, 123, 255, 0.7);
+            background-color: var(--secondary-color);
             border-radius: 0 30px 30px 0;
 
             &:hover {
@@ -1134,7 +1152,7 @@ body {
             }
           }
           &.is-last-day {
-            background-color: rgba(0, 123, 255, 0.7);
+            background-color: var(--secondary-color);
             border-radius: 30px 0 0 30px;
 
             &:hover {
@@ -1146,10 +1164,10 @@ body {
           }
 
           color: black;
-          background-color: rgba(0, 123, 255, 0.5);
+          background-color: var(--hover-color);
 
           &:hover {
-            background-color: rgba(0, 123, 255, 0.7);
+            background-color: var(--secondary-color);
             border-radius: 0;
           }
         }
@@ -1167,18 +1185,23 @@ body {
 
           &.selected-date {
             color: white;
-            background-color: rgba(0, 123, 255, 1);
+            background-color: var(--main-color);
           }
 
           &.selected-in-range {
             color: black;
-            background-color: rgba(0, 123, 255, 0.5);
-            border: 2px solid rgba(0, 123, 255, 1);
+            background-color: var(--hover-color);
+            border: 2px solid var(--main-color);
           }
         }
 
         &.mock-day {
           background-color: transparent;
+          cursor: auto;
+
+          &:hover {
+            background-color: transparent;
+          }
         }
 
         &.day-disabled {
@@ -1187,13 +1210,13 @@ body {
         }
 
         &.today {
-          border: 1px solid #417df4;
+          border: 1px solid var(--main-color);
           border-radius: 30px;
         }
 
         &:hover {
           color: white;
-          background-color: rgba(0, 123, 255, 0.5);
+          background-color: var(--hover-color);
           border-radius: 30px;
         }
       }
@@ -1226,8 +1249,8 @@ body {
       width: 30px;
       height: 30px;
       border-radius: 50%;
-      border: 1px solid #417df4;
-      color: #417df4;
+      border: 1px solid var(--main-color);
+      color: var(--main-color);
       text-align: center;
       line-height: 36px;
       left: 10px;
@@ -1312,8 +1335,8 @@ body {
         .confirm {
           font-size: 18px;
           margin-right: 10px;
-          border: 1px solid #417df4;
-          color: #417df4;
+          border: 1px solid var(--main-color);
+          color: var(--main-color);
           border-radius: 5px;
           padding: 15px 10px 10px 10px;
           cursor: pointer;
@@ -1323,10 +1346,10 @@ body {
           width: 70px;
         }
         .cancel {
-          color: #417df4;
+          color: var(--main-color);
           font-size: 18px;
           margin-right: 10px;
-          border: 1px solid #417df4;
+          border: 1px solid var(--main-color);
           background-color: white;
           border-radius: 5px;
           padding: 15px 10px 10px 10px;
@@ -1338,7 +1361,7 @@ body {
 
         button:hover {
           color: #fff;
-          background-color: #417df4;
+          background-color: var(--main-color);
           outline: none;
         }
       }
@@ -1414,14 +1437,14 @@ body {
           cursor: pointer;
           -webkit-transition: 0.3s;
           transition: 0.3s;
-          border: 1px solid #417df4;
+          border: 1px solid var(--main-color);
 
           &.current-active-year {
-            border: 4px double #417df4;
+            border: 4px double var(--main-color);
           }
 
           &:hover {
-            background-color: #417df4;
+            background-color: var(--main-color);
             color: white;
           }
         }
@@ -1448,10 +1471,10 @@ body {
           cursor: pointer;
           -webkit-transition: 0.3s;
           transition: 0.3s;
-          border: 1px solid #417df4;
+          border: 1px solid var(--main-color);
 
           &:hover {
-            background-color: #417df4;
+            background-color: var(--main-color);
             color: white;
           }
         }
@@ -1478,6 +1501,7 @@ body {
 
       &.range-is-enabled {
         width: calc(100% - 30px);
+        max-width: 378px;
       }
 
       .double-month-container {
