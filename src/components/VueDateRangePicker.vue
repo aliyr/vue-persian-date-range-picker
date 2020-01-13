@@ -369,7 +369,7 @@ export default {
   data() {
     return {
       // check whether the dialog is open or not
-      isOpen: true,
+      isOpen: false,
       // the main object that stores the content of datepicker
       datetimePickerObj: {
         monthsArray: {
