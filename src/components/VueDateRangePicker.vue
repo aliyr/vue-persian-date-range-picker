@@ -20,7 +20,7 @@
           {{ this.selectedDateArray[0] }}
         </div>
         <div class="month-container">
-          {{ this.formattedDayOfWeek }}
+          {{ this.formattedDayOfWeek || "تاریخ انتخاب نشده است" }}
         </div>
       </div>
       <div class="mnx-dtp-header range-header" v-else>
@@ -234,26 +234,31 @@
         <div class="close-btn" @click="goToDefaultCalendar">X</div>
         <div class="time-selection-container">
           <div class="minute-container">
-            <div class="top-arrow" @click="timeIterator('increase', 'minute')">
-            </div>
+            <div
+              class="top-arrow"
+              @click="timeIterator('increase', 'minute')"
+            ></div>
             <div class="time-shower">
               {{ currentSelectedTime.minute | prependZeroToTime }}
             </div>
             <div
               class="bottom-arrow"
               @click="timeIterator('decrease', 'minute')"
-            >
-            </div>
+            ></div>
           </div>
           <div class="two-dots">:</div>
           <div class="hour-container">
-            <div class="top-arrow" @click="timeIterator('increase', 'hour')">
-            </div>
+            <div
+              class="top-arrow"
+              @click="timeIterator('increase', 'hour')"
+            ></div>
             <div class="time-shower">
               {{ currentSelectedTime.hour | prependZeroToTime }}
             </div>
-            <div class="bottom-arrow" @click="timeIterator('decrease', 'hour')">
-            </div>
+            <div
+              class="bottom-arrow"
+              @click="timeIterator('decrease', 'hour')"
+            ></div>
           </div>
         </div>
         <div class="confirm-button-container">
@@ -316,9 +321,28 @@
         </div>
       </div>
       <div class="action-bar-container">
-        <button class="confirm">تایید</button>
-        <button class="cancel" @click="clearDateRanges">لغو</button>
-        <button class="close">بازگشت</button>
+        <button
+          class="confirm"
+          @click="
+            () => {
+              this.isOpen = false;
+              this.confirmDateSelection();
+            }
+          "
+        >
+          تایید
+        </button>
+        <button class="cancel" @click="cancelDateSelection">لغو</button>
+        <button
+          class="close"
+          @click="
+            () => {
+              this.isOpen = false;
+            }
+          "
+        >
+          بستن
+        </button>
       </div>
     </div>
     <div class="mnx-dtp-mask" v-if="isOpen" @click="onInputSelect"></div>
@@ -621,6 +645,9 @@ export default {
     },
     // format year and month header in single date selection
     formatYearAndMonth() {
+      // when there is no selected date
+      if (!this.selectedDateArray) return;
+
       let selectedMonth = new PersianDate(this.currentMonthArray);
       let selectedDate = new PersianDate(this.selectedDateArray);
       let nextSelectedMonth = selectedMonth.add("M", 1);
@@ -635,7 +662,9 @@ export default {
       this.formattedFirstYearAndMonth = selectedMonth.format("MMMM YYYY");
       this.formattedSecondYearAndMonth = nextSelectedMonth.format("MMMM YYYY");
 
-      let timeHeaderFormat = this.time ? "dddd, DD MMMM YYYY, HH:mm" : "dddd, DD MMMM YYYY";
+      let timeHeaderFormat = this.time
+        ? "dddd, DD MMMM YYYY, HH:mm"
+        : "dddd, DD MMMM YYYY";
 
       if (this.rangeDateArray[0]) {
         // because if the range is selected, the next click that removes the range,
@@ -684,7 +713,6 @@ export default {
           case 1: {
             this.rangeDateArray.push(dayObject);
             this.populateDateRanges();
-            this.emitDateRanges();
             break;
           }
           // in case that user clicked the first date for the FIRST TIME
@@ -699,11 +727,7 @@ export default {
       } else {
         // used for non range mode
         this.selectedDateArray = dayObject.date;
-        const selectedDate = new PersianDate(dayObject.date).format(
-          this.format
-        );
         this.formatYearAndMonth();
-        this.$emit("input", selectedDate);
       }
     },
     // emit data of ranges
@@ -716,6 +740,12 @@ export default {
       );
       const emittedDates = firstDate + " - " + secondDate;
       this.$emit("input", emittedDates);
+    },
+    emitSingleDate() {
+      const selectedDate = new PersianDate(this.selectedDateArray).format(
+        this.format
+      );
+      this.$emit("input", selectedDate);
     },
     createDateObjectUnit(dateInstance) {
       // make current date in an array
@@ -786,13 +816,13 @@ export default {
         this.rangeDateArray = this.rangeDateArray.reverse();
       }
 
-      if (this.time) {
+      // if (this.time) {
       this.rangeDateArray[0].date[3] = 0;
       this.rangeDateArray[0].date[4] = 0;
 
       this.rangeDateArray[1].date[3] = 23;
       this.rangeDateArray[1].date[4] = 59;
-      }
+      // }
     },
     clearDateRanges() {
       this.selectedDatesInRangeArray = [];
@@ -806,6 +836,25 @@ export default {
         item.isFirstDay = false;
         item.isLastDay = false;
       });
+    },
+    cancelDateSelection() {
+      this.selectedInternalDateId = "";
+      if (this.range) {
+        this.clearDateRanges();
+        this.rangeDateArray = [];
+        this.formattedRangeOfDates = [];
+      } else {
+        this.selectedDateArray = [];
+        this.formattedDayOfWeek = null;
+      }
+      this.$emit("input", null);
+    },
+    confirmDateSelection() {
+      if (this.range) {
+        this.emitDateRanges();
+      } else {
+        this.emitSingleDate();
+      }
     },
     parseStringToValidDate(stringDate) {
       let splittedDate = stringDate.split("/");
@@ -974,12 +1023,10 @@ export default {
   box-sizing: border-box;
   font-family: IRANSansMobileFaNum !important;
 
-  &:hover{
-    transition: .2s;
+  &:hover {
+    transition: 0.2s;
   }
-
 }
-
 
 *::selection {
   background-color: transparent;
@@ -1499,7 +1546,7 @@ export default {
       }
     }
 
-    .action-bar-container{
+    .action-bar-container {
       display: flex;
       justify-content: flex-start;
       padding: 16px;
@@ -1519,8 +1566,9 @@ export default {
         height: 45px;
         min-width: 80px;
         padding: 12px 8px 8px;
+        opacity: 1;
 
-        &:hover{
+        &:hover {
           background-color: var(--main-color);
           color: white;
         }
@@ -1539,7 +1587,6 @@ export default {
     bottom: 0;
   }
 }
-
 
 /* Small devices (portrait tablets and large phones, 600px and up) */
 @media only screen and (max-width: 768px) {
@@ -1560,7 +1607,7 @@ export default {
 
       .mnx-dtp-header.range-header {
         .month-container {
-          span.time-picker-button{
+          span.time-picker-button {
             margin-right: 0;
             display: block;
             width: 108px;
@@ -1568,26 +1615,21 @@ export default {
         }
       }
 
-      .year-month-selection-wrapper{
-
-        .year-selection-wrapper{
-
-          .year{
+      .year-month-selection-wrapper {
+        .year-selection-wrapper {
+          .year {
             margin-right: 0px;
             margin-bottom: 8px;
           }
-
         }
 
-        .month-selection-wrapper{
-
-          .month{
+        .month-selection-wrapper {
+          .month {
             margin-right: 0px;
             margin-bottom: 8px;
           }
         }
       }
-
     }
   }
 }
@@ -1596,7 +1638,6 @@ export default {
 @media only screen and (min-width: 768px) {
   .mnx-dtp {
     .mnx-dtp-container {
-
       &.range-is-enabled {
         width: calc(100% - 30px);
         max-width: 754px;
@@ -1607,7 +1648,6 @@ export default {
 
 /* Large devices (laptops/desktops, 992px and up) */
 @media only screen and (min-width: 992px) {
-
 }
 
 /* Extra large devices (large laptops and desktops, 1200px and up) */
