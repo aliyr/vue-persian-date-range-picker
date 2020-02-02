@@ -14,6 +14,7 @@
     "build-lib": "vue-cli-service build --target lib --name vue-date-range-picker ./src/main.js"
   },
   "dependencies": {
+    "@vue/composition-api": "^0.3.4",
     "core-js": "^3.4.3",
     "vue": "^2.6.10"
   },

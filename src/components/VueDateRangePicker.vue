@@ -564,6 +564,28 @@ export default {
       }
       return str;
     },
+    convertToEnglishNumber(str) {
+      const persianNumberArr = [
+        /۰/g,
+        /۱/g,
+        /۲/g,
+        /۳/g,
+        /۴/g,
+        /۵/g,
+        /۶/g,
+        /۷/g,
+        /۸/g,
+        /۹/g
+      ];
+
+      if (typeof str === "string") {
+        let i = 0;
+        for (; i < 10; i++) {
+          str = str.replace(persianNumberArr[i], i);
+        }
+      }
+      return str;
+    },
     makeDaysOfMonth(startDate) {
       const isLeapYear = new PersianDate(startDate).isLeapYear(); // check if year is leap year
       let daysOfMonth = this.getDaysOfMonth(startDate[1], isLeapYear); // get count of days in the month
@@ -593,8 +615,10 @@ export default {
           }
         }
 
-        if (this.min || this.max) {
-          dateObject.disabled = this.compareDateToMinAndMaxDate(dateObject);
+        let isDayDisable = this.checkDayDisableByMinAndMax(dateObject);
+
+        if (isDayDisable) {
+          dateObject.disabled = true;
         }
 
         monthArray.push(dateObject);
@@ -738,12 +762,14 @@ export default {
       const secondDate = new PersianDate(this.rangeDateArray[1].date).format(
         this.format
       );
-      const emittedDates = firstDate + " - " + secondDate;
+      const emittedDates = this.convertToEnglishNumber(
+        firstDate + " - " + secondDate
+      );
       this.$emit("input", emittedDates);
     },
     emitSingleDate() {
-      const selectedDate = new PersianDate(this.selectedDateArray).format(
-        this.format
+      const selectedDate = this.convertToEnglishNumber(
+        new PersianDate(this.selectedDateArray).format(this.format)
       );
       this.$emit("input", selectedDate);
     },
@@ -865,30 +891,40 @@ export default {
 
       return new PersianDate(splittedDate);
     },
-    compareDateToMinAndMaxDate(date) {
+    compareDateToMinAndMaxDate(date, type) {
       const dateInstance = new PersianDate(date.date).format("X");
-      let isLowerThanMin = false;
-      let isHigherThanMax = false;
 
-      if (!this.minDateInMilliseconds) {
+      if (type === "min") {
+        let isLowerThanMin = false;
         this.minDateInMilliseconds = this.parseStringToValidDate(
           this.min
         ).format("X");
+
+        isLowerThanMin = dateInstance < this.minDateInMilliseconds;
+        return isLowerThanMin;
       }
-      if (!this.maxDateInMilliseconds) {
+
+      if (type === "max") {
+        let isHigherThanMax = false;
         this.maxDateInMilliseconds = this.parseStringToValidDate(
           this.max
         ).format("X");
-      }
 
+        isHigherThanMax = dateInstance > this.maxDateInMilliseconds;
+        return isHigherThanMax;
+      }
+    },
+    checkDayDisableByMinAndMax(dateObject) {
+      let lessThanMin = false;
+      let moreThanMax = false;
       if (this.min) {
-        isLowerThanMin = dateInstance < this.minDateInMilliseconds;
+        lessThanMin = this.compareDateToMinAndMaxDate(dateObject, "min");
       }
       if (this.max) {
-        isHigherThanMax = dateInstance > this.maxDateInMilliseconds;
+        moreThanMax = this.compareDateToMinAndMaxDate(dateObject, "max");
       }
 
-      return isLowerThanMin || isHigherThanMax;
+      return lessThanMin || moreThanMax;
     },
     setManualTimeForDateRange(rangeDateIndex) {
       this.isGoingToSelectTime = true;
