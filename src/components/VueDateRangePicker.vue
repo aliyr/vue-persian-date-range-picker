@@ -323,6 +323,7 @@
       <div class="action-bar-container">
         <button
           class="confirm"
+          :class="{ 'disabled': !isConfirmButtonActive }"
           @click="
             () => {
               this.isOpen = false;
@@ -1041,6 +1042,7 @@ export default {
       };
     },
     isConfirmButtonActive: function() {
+      debugger;
       if (this.range) {
         if (this.rangeDateArray.length !== 2) {
           return false;
@@ -1620,6 +1622,11 @@ export default {
         &:hover {
           background-color: var(--main-color);
           color: white;
+        }
+
+        &.disabled {
+          opacity: 0.3;
+          pointer-events: none;
         }
       }
     }
