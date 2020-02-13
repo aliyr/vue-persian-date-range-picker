@@ -316,7 +316,7 @@
         </div>
       </div>
       <div class="action-bar-container">
-        <button class="confirm">تایید</button>
+        <button class="confirm" :disabled="!isConfirmButtonActive">تایید</button>
         <button class="cancel" @click="clearDateRanges">لغو</button>
         <button class="close">بازگشت</button>
       </div>
@@ -806,6 +806,8 @@ export default {
         item.isFirstDay = false;
         item.isLastDay = false;
       });
+
+      this.formatRangeOfDates();
     },
     parseStringToValidDate(stringDate) {
       let splittedDate = stringDate.split("/");
@@ -954,6 +956,19 @@ export default {
         "--secondary-color": this.themeColor + "B3",
         "--hover-color": this.themeColor + "80"
       };
+    },
+    isConfirmButtonActive: function() {
+      if (this.range) {
+        if (this.rangeDateArray.length !== 2) {
+          return false;
+        }
+      } else {
+        if (this.selectedDateArray.length === 0) {
+          return false;
+        }
+      }
+
+      return true;
     }
   },
   filters: {
