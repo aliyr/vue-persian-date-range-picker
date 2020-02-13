@@ -20,7 +20,7 @@
           {{ this.selectedDateArray[0] }}
         </div>
         <div class="month-container">
-          {{ this.formattedDayOfWeek }}
+          {{ this.formattedDayOfWeek || "تاریخ انتخاب نشده است" }}
         </div>
       </div>
       <div class="mnx-dtp-header range-header" v-else>
@@ -234,26 +234,31 @@
         <div class="close-btn" @click="goToDefaultCalendar">X</div>
         <div class="time-selection-container">
           <div class="minute-container">
-            <div class="top-arrow" @click="timeIterator('increase', 'minute')">
-            </div>
+            <div
+              class="top-arrow"
+              @click="timeIterator('increase', 'minute')"
+            ></div>
             <div class="time-shower">
               {{ currentSelectedTime.minute | prependZeroToTime }}
             </div>
             <div
               class="bottom-arrow"
               @click="timeIterator('decrease', 'minute')"
-            >
-            </div>
+            ></div>
           </div>
           <div class="two-dots">:</div>
           <div class="hour-container">
-            <div class="top-arrow" @click="timeIterator('increase', 'hour')">
-            </div>
+            <div
+              class="top-arrow"
+              @click="timeIterator('increase', 'hour')"
+            ></div>
             <div class="time-shower">
               {{ currentSelectedTime.hour | prependZeroToTime }}
             </div>
-            <div class="bottom-arrow" @click="timeIterator('decrease', 'hour')">
-            </div>
+            <div
+              class="bottom-arrow"
+              @click="timeIterator('decrease', 'hour')"
+            ></div>
           </div>
         </div>
         <div class="confirm-button-container">
@@ -316,9 +321,28 @@
         </div>
       </div>
       <div class="action-bar-container">
-        <button class="confirm" :disabled="!isConfirmButtonActive">تایید</button>
-        <button class="cancel" @click="clearDateRanges">لغو</button>
-        <button class="close">بازگشت</button>
+        <button
+          class="confirm"
+          @click="
+            () => {
+              this.isOpen = false;
+              this.confirmDateSelection();
+            }
+          "
+        >
+          تایید
+        </button>
+        <button class="cancel" @click="cancelDateSelection">لغو</button>
+        <button
+          class="close"
+          @click="
+            () => {
+              this.isOpen = false;
+            }
+          "
+        >
+          بستن
+        </button>
       </div>
     </div>
     <div class="mnx-dtp-mask" v-if="isOpen" @click="onInputSelect"></div>
@@ -540,6 +564,28 @@ export default {
       }
       return str;
     },
+    convertToEnglishNumber(str) {
+      const persianNumberArr = [
+        /۰/g,
+        /۱/g,
+        /۲/g,
+        /۳/g,
+        /۴/g,
+        /۵/g,
+        /۶/g,
+        /۷/g,
+        /۸/g,
+        /۹/g
+      ];
+
+      if (typeof str === "string") {
+        let i = 0;
+        for (; i < 10; i++) {
+          str = str.replace(persianNumberArr[i], i);
+        }
+      }
+      return str;
+    },
     makeDaysOfMonth(startDate) {
       const isLeapYear = new PersianDate(startDate).isLeapYear(); // check if year is leap year
       let daysOfMonth = this.getDaysOfMonth(startDate[1], isLeapYear); // get count of days in the month
@@ -569,8 +615,10 @@ export default {
           }
         }
 
-        if (this.min || this.max) {
-          dateObject.disabled = this.compareDateToMinAndMaxDate(dateObject);
+        let isDayDisable = this.checkDayDisableByMinAndMax(dateObject);
+
+        if (isDayDisable) {
+          dateObject.disabled = true;
         }
 
         monthArray.push(dateObject);
@@ -621,6 +669,9 @@ export default {
     },
     // format year and month header in single date selection
     formatYearAndMonth() {
+      // when there is no selected date
+      if (!this.selectedDateArray) return;
+
       let selectedMonth = new PersianDate(this.currentMonthArray);
       let selectedDate = new PersianDate(this.selectedDateArray);
       let nextSelectedMonth = selectedMonth.add("M", 1);
@@ -635,7 +686,9 @@ export default {
       this.formattedFirstYearAndMonth = selectedMonth.format("MMMM YYYY");
       this.formattedSecondYearAndMonth = nextSelectedMonth.format("MMMM YYYY");
 
-      let timeHeaderFormat = this.time ? "dddd, DD MMMM YYYY, HH:mm" : "dddd, DD MMMM YYYY";
+      let timeHeaderFormat = this.time
+        ? "dddd, DD MMMM YYYY, HH:mm"
+        : "dddd, DD MMMM YYYY";
 
       if (this.rangeDateArray[0]) {
         // because if the range is selected, the next click that removes the range,
@@ -684,7 +737,6 @@ export default {
           case 1: {
             this.rangeDateArray.push(dayObject);
             this.populateDateRanges();
-            this.emitDateRanges();
             break;
           }
           // in case that user clicked the first date for the FIRST TIME
@@ -699,11 +751,7 @@ export default {
       } else {
         // used for non range mode
         this.selectedDateArray = dayObject.date;
-        const selectedDate = new PersianDate(dayObject.date).format(
-          this.format
-        );
         this.formatYearAndMonth();
-        this.$emit("input", selectedDate);
       }
     },
     // emit data of ranges
@@ -714,8 +762,16 @@ export default {
       const secondDate = new PersianDate(this.rangeDateArray[1].date).format(
         this.format
       );
-      const emittedDates = firstDate + " - " + secondDate;
+      const emittedDates = this.convertToEnglishNumber(
+        firstDate + " - " + secondDate
+      );
       this.$emit("input", emittedDates);
+    },
+    emitSingleDate() {
+      const selectedDate = this.convertToEnglishNumber(
+        new PersianDate(this.selectedDateArray).format(this.format)
+      );
+      this.$emit("input", selectedDate);
     },
     createDateObjectUnit(dateInstance) {
       // make current date in an array
@@ -786,13 +842,13 @@ export default {
         this.rangeDateArray = this.rangeDateArray.reverse();
       }
 
-      if (this.time) {
+      // if (this.time) {
       this.rangeDateArray[0].date[3] = 0;
       this.rangeDateArray[0].date[4] = 0;
 
       this.rangeDateArray[1].date[3] = 23;
       this.rangeDateArray[1].date[4] = 59;
-      }
+      // }
     },
     clearDateRanges() {
       this.selectedDatesInRangeArray = [];
@@ -806,8 +862,25 @@ export default {
         item.isFirstDay = false;
         item.isLastDay = false;
       });
-
-      this.formatRangeOfDates();
+    },
+    cancelDateSelection() {
+      this.selectedInternalDateId = "";
+      if (this.range) {
+        this.clearDateRanges();
+        this.rangeDateArray = [];
+        this.formattedRangeOfDates = [];
+      } else {
+        this.selectedDateArray = [];
+        this.formattedDayOfWeek = null;
+      }
+      this.$emit("input", null);
+    },
+    confirmDateSelection() {
+      if (this.range) {
+        this.emitDateRanges();
+      } else {
+        this.emitSingleDate();
+      }
     },
     parseStringToValidDate(stringDate) {
       let splittedDate = stringDate.split("/");
@@ -818,30 +891,40 @@ export default {
 
       return new PersianDate(splittedDate);
     },
-    compareDateToMinAndMaxDate(date) {
+    compareDateToMinAndMaxDate(date, type) {
       const dateInstance = new PersianDate(date.date).format("X");
-      let isLowerThanMin = false;
-      let isHigherThanMax = false;
 
-      if (!this.minDateInMilliseconds) {
+      if (type === "min") {
+        let isLowerThanMin = false;
         this.minDateInMilliseconds = this.parseStringToValidDate(
           this.min
         ).format("X");
+
+        isLowerThanMin = dateInstance < this.minDateInMilliseconds;
+        return isLowerThanMin;
       }
-      if (!this.maxDateInMilliseconds) {
+
+      if (type === "max") {
+        let isHigherThanMax = false;
         this.maxDateInMilliseconds = this.parseStringToValidDate(
           this.max
         ).format("X");
-      }
 
+        isHigherThanMax = dateInstance > this.maxDateInMilliseconds;
+        return isHigherThanMax;
+      }
+    },
+    checkDayDisableByMinAndMax(dateObject) {
+      let lessThanMin = false;
+      let moreThanMax = false;
       if (this.min) {
-        isLowerThanMin = dateInstance < this.minDateInMilliseconds;
+        lessThanMin = this.compareDateToMinAndMaxDate(dateObject, "min");
       }
       if (this.max) {
-        isHigherThanMax = dateInstance > this.maxDateInMilliseconds;
+        moreThanMax = this.compareDateToMinAndMaxDate(dateObject, "max");
       }
 
-      return isLowerThanMin || isHigherThanMax;
+      return lessThanMin || moreThanMax;
     },
     setManualTimeForDateRange(rangeDateIndex) {
       this.isGoingToSelectTime = true;
@@ -989,12 +1072,10 @@ export default {
   box-sizing: border-box;
   font-family: IRANSansMobileFaNum !important;
 
-  &:hover{
-    transition: .2s;
+  &:hover {
+    transition: 0.2s;
   }
-
 }
-
 
 *::selection {
   background-color: transparent;
@@ -1514,7 +1595,7 @@ export default {
       }
     }
 
-    .action-bar-container{
+    .action-bar-container {
       display: flex;
       justify-content: flex-start;
       padding: 16px;
@@ -1534,8 +1615,9 @@ export default {
         height: 45px;
         min-width: 80px;
         padding: 12px 8px 8px;
+        opacity: 1;
 
-        &:hover{
+        &:hover {
           background-color: var(--main-color);
           color: white;
         }
@@ -1554,7 +1636,6 @@ export default {
     bottom: 0;
   }
 }
-
 
 /* Small devices (portrait tablets and large phones, 600px and up) */
 @media only screen and (max-width: 768px) {
@@ -1575,7 +1656,7 @@ export default {
 
       .mnx-dtp-header.range-header {
         .month-container {
-          span.time-picker-button{
+          span.time-picker-button {
             margin-right: 0;
             display: block;
             width: 108px;
@@ -1583,26 +1664,21 @@ export default {
         }
       }
 
-      .year-month-selection-wrapper{
-
-        .year-selection-wrapper{
-
-          .year{
+      .year-month-selection-wrapper {
+        .year-selection-wrapper {
+          .year {
             margin-right: 0px;
             margin-bottom: 8px;
           }
-
         }
 
-        .month-selection-wrapper{
-
-          .month{
+        .month-selection-wrapper {
+          .month {
             margin-right: 0px;
             margin-bottom: 8px;
           }
         }
       }
-
     }
   }
 }
@@ -1611,7 +1687,6 @@ export default {
 @media only screen and (min-width: 768px) {
   .mnx-dtp {
     .mnx-dtp-container {
-
       &.range-is-enabled {
         width: calc(100% - 30px);
         max-width: 754px;
@@ -1622,7 +1697,6 @@ export default {
 
 /* Large devices (laptops/desktops, 992px and up) */
 @media only screen and (min-width: 992px) {
-
 }
 
 /* Extra large devices (large laptops and desktops, 1200px and up) */
